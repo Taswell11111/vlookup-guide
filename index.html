@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VLOOKUP Interactive Tutorial</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .sheet-table {
+            border-collapse: collapse;
+            border: 1px solid #d1d5db;
+        }
+        .sheet-table th, .sheet-table td {
+            border: 1px solid #d1d5db;
+            padding: 8px 12px;
+            text-align: left;
+            min-width: 80px;
+            position: relative;
+        }
+        .sheet-table th {
+            background-color: #f3f4f6;
+            font-weight: 600;
+            color: #4b5563;
+        }
+        .sheet-table th[data-col-ref]:hover {
+            cursor: pointer;
+            background-color: #e5e7eb;
+        }
+        .sheet-table .row-num {
+            background-color: #f3f4f6;
+            color: #4b5563;
+            font-weight: 600;
+            text-align: center;
+            min-width: 40px;
+        }
+        .sheet-table .header-index {
+            position: absolute;
+            top: -22px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-weight: 500;
+        }
+        .highlight-search-key { background-color: #dbeafe; transition: all 0.3s ease-in-out; }
+        .highlight-range { box-shadow: 0 0 0 3px #60a5fa; transition: all 0.3s ease-in-out; }
+        .highlight-range-col, .highlight-col-body { background-color: #c7d2fe !important; }
+        .highlight-index { background-color: #a5f3fc; transition: all 0.3s ease-in-out; }
+        .highlight-result { background-color: #d1fae5; transition: all 0.3s ease-in-out; font-weight: bold; }
+        .highlight-test-selection { box-shadow: 0 0 0 3px #22c55e; background-color: #f0fdf4; }
+        .formula-part { padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; font-weight: 600; }
+        .test-input { width: 80px; border: 1px solid #d1d5db; border-radius: 4px; padding: 4px 6px; font-family: 'Courier New', Courier, monospace; }
+        .test-input.error { border-color: #ef4444; box-shadow: 0 0 0 2px #fecaca; }
+        .fill-handle { position: absolute; bottom: -2px; right: -2px; width: 8px; height: 8px; background-color: #166534; border: 1px solid #ffffff; cursor: cell; display: none; }
+        .fill-handle.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-5xl bg-white shadow-xl rounded-lg border border-gray-200 overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-900">Interactive VLOOKUP Guide</h1>
+            <p class="mt-1 text-gray-600">Learn, practice, and test your VLOOKUP skills.</p>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Left side: Tables -->
+            <div class="space-y-8">
+                <div>
+                    <h2 class="text-lg font-semibold mb-2 text-gray-700">Source Data: Product List</h2>
+                    <p class="text-sm text-gray-500 mb-3">In the test, click cells to select the search key or drag column headers to select the range.</p>
+                    <div id="range-container" class="relative inline-block rounded-lg">
+                        <table class="sheet-table" id="source-table">
+                            <thead>
+                                <tr>
+                                    <th class="row-num"></th>
+                                    <th data-col-ref="A"><span class="header-index" id="col-idx-1" style="display:none;">Column 1</span>A</th>
+                                    <th data-col-ref="B"><span class="header-index" id="col-idx-2" style="display:none;">Column 2</span>B</th>
+                                    <th data-col-ref="C"><span class="header-index" id="col-idx-3" style="display:none;">Column 3</span>C</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="row-num">1</td><td data-col="A"><b>Product ID</b></td><td data-col="B"><b>Product Name</b></td><td data-col="C"><b>Price</b></td></tr>
+                                <tr><td class="row-num">2</td><td data-cell-ref="A2" data-col="A">P101</td><td data-col="B">Laptop</td><td data-col="C">$1200</td></tr>
+                                <tr><td class="row-num">3</td><td data-cell-ref="A3" data-col="A">P102</td><td data-col="B">Mouse</td><td data-col="C">$25</td></tr>
+                                <tr><td class="row-num">4</td><td data-cell-ref="A4" id="data-P103" data-col="A">P103</td><td data-col="B">Keyboard</td><td data-col="C">$75</td></tr>
+                                <tr><td class="row-num">5</td><td data-cell-ref="A5" id="data-P104" data-col="A">P104</td><td data-col="B">Monitor</td><td data-col="C" id="data-P104-price">$300</td></tr>
+                                <tr><td class="row-num">6</td><td data-cell-ref="A6" data-col="A">P105</td><td data-col="B">Webcam</td><td data-col="C">$50</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="tutorial-goal-container">
+                    <h2 class="text-lg font-semibold mb-2 text-gray-700">Your Goal (Tutorial)</h2>
+                    <p class="text-sm text-gray-500 mb-3">Find the <strong>price</strong> of the product with the ID "P104".</p>
+                    <table class="sheet-table">
+                         <thead><tr><th class="row-num"></th><th>A</th><th>B</th></tr></thead>
+                        <tbody>
+                            <tr><td class="row-num">9</td><td><b>Product ID</b></td><td><b>Price</b></td></tr>
+                            <tr><td class="row-num">10</td><td id="search-key-cell">P104</td><td id="result-cell" class="font-mono text-gray-500"><span>?</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="test-yourself-container" class="hidden">
+                    <h2 class="text-lg font-semibold mb-2 text-gray-700">Your Goal (Test)</h2>
+                    <p class="text-sm text-gray-500 mb-3">Find the <strong>price</strong> for each Product ID below. Start with the first one.</p>
+                     <table class="sheet-table" id="test-goal-table">
+                         <thead><tr><th class="row-num"></th><th>A</th><th>B</th></tr></thead>
+                        <tbody>
+                            <tr><td class="row-num">1</td><td><b>Product ID</b></td><td><b>Price</b></td></tr>
+                            <tr><td class="row-num">2</td><td data-cell-ref="A2">P103</td><td class="test-result-cell"><span>?</span><div id="fill-handle" class="fill-handle" title="Double-click to autofill down"></div></td></tr>
+                            <tr><td class="row-num">3</td><td data-cell-ref="A3">P105</td><td class="test-result-cell"><span>?</span></td></tr>
+                            <tr><td class="row-num">4</td><td data-cell-ref="A4">P101</td><td class="test-result-cell"><span>?</span></td></tr>
+                            <tr><td class="row-num">5</td><td data-cell-ref="A5">P102</td><td class="test-result-cell"><span>?</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Right side: Tutorial steps -->
+            <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                <div id="tutorial-content-container">
+                    <div id="tutorial-step" class="prose"></div>
+                    <div class="mt-6">
+                        <h3 class="font-semibold text-gray-700">Formula Builder:</h3>
+                        <div id="formula-display" class="mt-2 p-3 bg-white border rounded-md text-sm text-gray-800 font-mono flex items-center flex-wrap gap-1">
+                            <span>=VLOOKUP(</span><span id="formula-search-key"></span><span id="formula-range"></span><span id="formula-index"></span><span id="formula-is-sorted"></span><span>)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="test-content-container" class="hidden">
+                     <div class="prose">
+                        <h2 class="text-xl font-bold mb-3">Test Yourself</h2>
+                        <p class="text-gray-700">Fill in the formula for the first item (P103). Click cells or drag columns to help. Once correct, double-click the green square to autofill the rest!</p>
+                     </div>
+                     <div class="mt-6">
+                        <h3 class="font-semibold text-gray-700">Enter Your Formula:</h3>
+                        <div class="mt-2 p-3 bg-white border rounded-md text-sm text-gray-800 font-mono flex items-center flex-wrap gap-1">
+                            <span>=VLOOKUP(</span>
+                            <input type="text" id="test-search-key" class="test-input" placeholder="search_key">,
+                            <input type="text" id="test-range" class="test-input" placeholder="range">,
+                            <input type="text" id="test-index" class="test-input" placeholder="index">,
+                            <input type="text" id="test-is-sorted" class="test-input" placeholder="is_sorted">
+                            <span>)</span>
+                        </div>
+                        <button id="check-formula-btn" class="mt-4 w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Check Formula</button>
+                        <p id="test-feedback" class="mt-3 text-sm h-5"></p>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-between items-center">
+                    <button id="prev-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed">Previous</button>
+                    <span id="step-counter" class="text-sm text-gray-500"></span>
+                    <button id="next-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Next</button>
+                </div>
+                <p id="completion-message" class="text-center mt-4 font-semibold text-green-600 h-6"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentStep = 0;
+            const tutorialEl = document.getElementById('tutorial-step');
+            const nextBtn = document.getElementById('next-btn');
+            const prevBtn = document.getElementById('prev-btn');
+            const stepCounterEl = document.getElementById('step-counter');
+            const completionMessage = document.getElementById('completion-message');
+
+            const tutorialGoalContainer = document.getElementById('tutorial-goal-container');
+            const testYourselfContainer = document.getElementById('test-yourself-container');
+            const tutorialContentContainer = document.getElementById('tutorial-content-container');
+            const testContentContainer = document.getElementById('test-content-container');
+            
+            const searchKeyCell = document.getElementById('search-key-cell');
+            const rangeContainer = document.getElementById('range-container');
+            const colIdx1 = document.getElementById('col-idx-1');
+            const colIdx2 = document.getElementById('col-idx-2');
+            const colIdx3 = document.getElementById('col-idx-3');
+            const resultCell = document.getElementById('result-cell');
+            const dataP104 = document.getElementById('data-P104');
+            const dataP104Price = document.getElementById('data-P104-price');
+            
+            const formulaSearchKey = document.getElementById('formula-search-key');
+            const formulaRange = document.getElementById('formula-range');
+            const formulaIndex = document.getElementById('formula-index');
+            const formulaIsSorted = document.getElementById('formula-is-sorted');
+
+            const sourceTable = document.getElementById('source-table');
+            const testGoalTable = document.getElementById('test-goal-table');
+            const testSearchKey = document.getElementById('test-search-key');
+            const testRange = document.getElementById('test-range');
+            const testIndex = document.getElementById('test-index');
+            const testIsSorted = document.getElementById('test-is-sorted');
+            const checkFormulaBtn = document.getElementById('check-formula-btn');
+            const testFeedback = document.getElementById('test-feedback');
+            const fillHandle = document.getElementById('fill-handle');
+            
+            const priceData = { 'P101': '$1200', 'P102': '$25', 'P103': '$75', 'P104': '$300', 'P105': '$50' };
+
+            const steps = [
+                { title: "Welcome! What is VLOOKUP?", content: `<p>VLOOKUP stands for 'Vertical Lookup'. It searches for a value in the <strong>first column</strong> of a table and returns related info from another column in the same row.</p><p>Our goal is to find the <strong>Price</strong> for Product ID <strong>P104</strong>.</p>`, action: () => { formulaSearchKey.textContent = 'search_key'; formulaRange.textContent = ' , range'; formulaIndex.textContent = ' , index'; formulaIsSorted.textContent = ' , is_sorted'; } },
+                { title: "Step 1: The Search Key", content: `<p>You begin in the cell where you want the result (B10). After typing <code>=VLOOKUP(</code> you select your lookup value. For us, that's cell <strong>A10</strong> ("P104").</p><p>Remember to type a comma <code>,</code> to separate arguments.</p>`, action: () => { searchKeyCell.classList.add('highlight-search-key'); formulaSearchKey.textContent = 'A10'; formulaSearchKey.classList.add('formula-part', 'bg-blue-100', 'text-blue-800'); } },
+                { title: "Step 2: The Range", content: `<p>Next, define the <code>range</code> where your data lives. It's crucial the search key is in the first column of this range.</p><p>You would select the columns containing your data, for example by clicking and holding on column header <strong>A</strong> and dragging to <strong>C</strong>. This selects <strong>A:C</strong>.</p>`, action: () => { rangeContainer.classList.add('highlight-range'); formulaRange.textContent = ' , A:C'; formulaRange.classList.add('formula-part', 'bg-blue-100', 'text-blue-800'); } },
+                { title: "Step 3: The Index", content: `<p>The <code>index</code> is the column number in your selected range to pull the result from, counting from the left (1, 2, 3...).</p><p>We want "Price", which is the <strong>3rd</strong> column in our range (A:C).</p>`, action: () => { colIdx1.style.display = 'block'; colIdx2.style.display = 'block'; colIdx3.style.display = 'block'; dataP104Price.parentElement.children[3].classList.add('highlight-index'); formulaIndex.textContent = ' , 3'; formulaIndex.classList.add('formula-part', 'bg-cyan-100', 'text-cyan-800'); } },
+                { title: "Step 4: is_sorted (Exact Match)", content: `<p>This last part specifies an exact match. 99% of the time, you want an <strong>exact match</strong>, which you get by using <strong>FALSE</strong>.</p>`, action: () => { formulaIsSorted.textContent = ' , FALSE'; formulaIsSorted.classList.add('formula-part', 'bg-gray-200', 'text-gray-800'); } },
+                { title: "The Result", content: `<p>When you press Enter, VLOOKUP performs the search and returns the value it finds: <strong>"$300"</strong>.</p>`, action: () => { dataP104.classList.add('highlight-search-key'); dataP104Price.classList.add('highlight-result'); resultCell.classList.add('highlight-result'); resultCell.querySelector('span').textContent = '$300'; } },
+                { title: "Bonus Step: Autofill", content: `<p>One of the most powerful features is autofill. Instead of re-typing the formula for every row, you can click the small square (the "fill handle") at the bottom-right of the cell.</p><p>Dragging this handle down, or double-clicking it, will apply the formula to all the cells below, automatically adjusting cell references!</p>`, action: () => { resultCell.innerHTML = '<span>$300</span><div class="fill-handle active" style="background-color: #059669;"></div>'; }},
+                { title: "Do's, Don'ts & Key Considerations", content: `<ul class="list-disc list-inside space-y-3"><li><strong class="text-green-600">DO:</strong> Always use <strong>FALSE</strong> for an exact match.</li><li><strong class="text-red-600">DON'T:</strong> Forget VLOOKUP only looks to the <strong>right</strong>.</li><li><strong class="text-blue-600">KEY:</strong> Your <code>search_key</code> must be in the <strong>first column</strong> of your <code>range</code>.</li></ul>`, action: () => {} },
+                { title: "Test Yourself", isTest: true, action: () => {} }
+            ];
+            
+            function resetTestState() {
+                testFeedback.textContent = '';
+                completionMessage.textContent = '';
+                fillHandle.classList.remove('active');
+                testGoalTable.querySelectorAll('.test-result-cell').forEach(cell => {
+                    cell.querySelector('span').textContent = '?';
+                    cell.classList.remove('highlight-result');
+                });
+                 document.querySelectorAll('.highlight-col-body').forEach(el => el.classList.remove('highlight-col-body'));
+            }
+
+            function clearHighlights() {
+                document.querySelectorAll('.highlight-index, .highlight-search-key, .highlight-result, .highlight-test-selection, .highlight-range-col').forEach(el => { el.className = el.className.replace(/highlight-\S+/g, ''); });
+                rangeContainer.classList.remove('highlight-range');
+                resultCell.innerHTML = '<span>?</span>';
+                [colIdx1, colIdx2, colIdx3].forEach(el => el.style.display = 'none');
+                [formulaSearchKey, formulaRange, formulaIndex, formulaIsSorted].forEach(el => { el.className = ''; el.textContent = ''; });
+            }
+
+            function renderStep(stepIndex) {
+                clearHighlights();
+                resetTestState();
+                const step = steps[stepIndex];
+                if (step.isTest) {
+                    tutorialGoalContainer.classList.add('hidden');
+                    tutorialContentContainer.classList.add('hidden');
+                    testYourselfContainer.classList.remove('hidden');
+                    testContentContainer.classList.remove('hidden');
+                } else {
+                    tutorialGoalContainer.classList.remove('hidden');
+                    tutorialContentContainer.classList.remove('hidden');
+                    testYourselfContainer.classList.add('hidden');
+                    testContentContainer.classList.add('hidden');
+                    tutorialEl.innerHTML = `<h2 class="text-xl font-bold mb-3">${step.title}</h2><div class="space-y-4 text-gray-700">${step.content}</div>`;
+                    for (let i = 0; i <= stepIndex; i++) { if (!steps[i].isTest) steps[i].action(); }
+                }
+                prevBtn.disabled = stepIndex === 0;
+                stepCounterEl.textContent = `Step ${stepIndex + 1} of ${steps.length}`;
+                nextBtn.textContent = (stepIndex === steps.length - 1) ? 'Start Over' : 'Next';
+            }
+            
+            let isSelectingRange = false;
+            let selectionStartCol = null;
+            
+            function updateColumnHighlight(start, end) {
+                const cols = ['A', 'B', 'C'];
+                const startIndex = cols.indexOf(start);
+                const endIndex = cols.indexOf(end);
+                const [min, max] = [Math.min(startIndex, endIndex), Math.max(startIndex, endIndex)];
+
+                sourceTable.querySelectorAll('td[data-col], th[data-col-ref]').forEach(el => el.classList.remove('highlight-col-body'));
+
+                for (let i = min; i <= max; i++) {
+                    sourceTable.querySelectorAll(`[data-col="${cols[i]}"], [data-col-ref="${cols[i]}"]`).forEach(el => {
+                        el.classList.add('highlight-col-body');
+                    });
+                }
+            }
+
+            sourceTable.querySelector('thead').addEventListener('mousedown', (e) => {
+                const header = e.target.closest('th[data-col-ref]');
+                if (currentStep === steps.length - 1 && header) {
+                    isSelectingRange = true;
+                    selectionStartCol = header;
+                    const colRef = header.dataset.colRef;
+                    updateColumnHighlight(colRef, colRef);
+                    testRange.value = colRef + ':' + colRef;
+                    e.preventDefault();
+                }
+            });
+
+            sourceTable.querySelector('thead').addEventListener('mouseover', (e) => {
+                const header = e.target.closest('th[data-col-ref]');
+                if (isSelectingRange && header && selectionStartCol) {
+                    const startRef = selectionStartCol.dataset.colRef;
+                    const endRef = header.dataset.colRef;
+                    updateColumnHighlight(startRef, endRef);
+                    const cols = ['A', 'B', 'C'];
+                    const finalRange = cols.indexOf(startRef) < cols.indexOf(endRef) ? `${startRef}:${endRef}` : `${endRef}:${startRef}`;
+                    testRange.value = finalRange;
+                }
+            });
+
+            document.addEventListener('mouseup', () => { isSelectingRange = false; selectionStartCol = null; });
+            
+            function handleTestCellClick(e) {
+                if(currentStep === steps.length - 1 && e.target.matches('td[data-cell-ref]')) {
+                    const cellRef = e.target.dataset.cellRef;
+                    if(cellRef.startsWith('A')) {
+                        document.querySelectorAll('.highlight-test-selection').forEach(el => el.classList.remove('highlight-test-selection'));
+                        e.target.classList.add('highlight-test-selection');
+                        testSearchKey.value = cellRef;
+                    }
+                }
+            }
+            sourceTable.querySelector('tbody').addEventListener('click', handleTestCellClick);
+            testGoalTable.querySelector('tbody').addEventListener('click', handleTestCellClick);
+
+            function checkFormula() {
+                const firstResultCell = testGoalTable.querySelector('.test-result-cell');
+                const correctAnswers = { searchKey: ['P103', 'A2'], range: ['A:C', 'A1:C6'], index: '3', isSorted: 'FALSE' };
+                let allCorrect = true;
+                if (!correctAnswers.searchKey.includes(testSearchKey.value.trim().toUpperCase())) allCorrect = false;
+                if (!correctAnswers.range.includes(testRange.value.trim().toUpperCase())) allCorrect = false;
+                if (testIndex.value.trim() !== correctAnswers.index) allCorrect = false;
+                if (testIsSorted.value.trim().toUpperCase() !== correctAnswers.isSorted) allCorrect = false;
+
+                if (allCorrect) {
+                    testFeedback.textContent = 'Correct! Now double-click the green square to autofill!';
+                    testFeedback.className = 'mt-3 text-sm h-5 text-green-600 font-semibold';
+                    firstResultCell.querySelector('span').textContent = '$75';
+                    firstResultCell.classList.add('highlight-result');
+                    fillHandle.classList.add('active');
+                } else {
+                    testFeedback.textContent = 'Not quite right. Check your formula parts.';
+                    testFeedback.className = 'mt-3 text-sm h-5 text-red-600 font-semibold';
+                    firstResultCell.querySelector('span').textContent = '?';
+                    firstResultCell.classList.remove('highlight-result');
+                    fillHandle.classList.remove('active');
+                }
+                return allCorrect;
+            }
+            checkFormulaBtn.addEventListener('click', checkFormula);
+
+            fillHandle.addEventListener('dblclick', () => {
+                if (checkFormula()) {
+                    testGoalTable.querySelectorAll('tbody tr').forEach(row => {
+                        const searchCell = row.querySelector('td[data-cell-ref]');
+                        const resultCell = row.querySelector('.test-result-cell');
+                        if (searchCell && resultCell) {
+                            const valueSpan = resultCell.querySelector('span');
+                            const searchKey = searchCell.textContent;
+                            if(valueSpan) {
+                                valueSpan.textContent = priceData[searchKey] || '?';
+                            }
+                            resultCell.classList.add('highlight-result');
+                        }
+                    });
+                    testFeedback.textContent = 'Autofill Complete! Great job!';
+                    completionMessage.textContent = "Great Job! You're all set.";
+                }
+            });
+
+            nextBtn.addEventListener('click', () => { currentStep = (currentStep < steps.length - 1) ? currentStep + 1 : 0; renderStep(currentStep); });
+            prevBtn.addEventListener('click', () => { if (currentStep > 0) { currentStep--; renderStep(currentStep); } });
+
+            renderStep(0);
+        });
+    </script>
+</body>
+</html>
+
